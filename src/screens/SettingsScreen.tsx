@@ -9,6 +9,7 @@ import {
   TextInput,
   Platform,
   StatusBar,
+  Linking,
 } from 'react-native';
 import { Colors } from '../constants/colors';
 import { AppSettings, AIProvider } from '../types';
@@ -134,6 +135,19 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         )}
       </View>
+
+      {/* ── Battery Optimization (Android only) ── */}
+      {Platform.OS === 'android' && (
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>Background Scanning</Text>
+          <Text style={styles.sectionHint}>
+            Android battery optimization can delay or skip scans. Disable it for this app so scans run on time.
+          </Text>
+          <TouchableOpacity style={styles.outlineButton} onPress={() => Linking.openSettings()}>
+            <Text style={styles.outlineButtonText}>Open App Battery Settings</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* ── Reddit Subreddits ── */}
       <View style={styles.section}>

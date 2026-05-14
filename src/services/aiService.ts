@@ -3,34 +3,31 @@ import { USER_PROFILE } from '../constants/profile';
 
 function buildPrompt(post: RedditPost): string {
   const source = post.sourceName ?? `r/${post.subreddit}`;
-  return `You are writing a job application reply on behalf of a developer.
+  return `Write a job application reply for this posting. Keep it to 3–5 sentences total — no long paragraphs.
 
 Developer Profile:
 ${USER_PROFILE}
 
-Job Posting:
-Platform: ${source}
+Job Posting (${source}):
 Title: ${post.title}
-Content: ${post.selftext || '(No additional content — title only)'}
+${post.selftext ? `Details: ${post.selftext.slice(0, 600)}` : ''}
 
-Write a concise, natural-sounding reply (2–3 short paragraphs) that:
-1. Directly addresses what they're looking for
-2. Highlights 2–3 specific skills or projects from the profile most relevant to this post
-3. Mentions the portfolio link naturally
-4. Sounds human, not templated
-5. Ends with a clear call to action
+Rules:
+- Read the post carefully. Address their specific tech stack or requirements by name.
+- Pick only the 1–2 most relevant skills/projects — do not list everything.
+- If the post mentions a tech you know (e.g. React Native, Next.js, Node), say you've shipped something with it specifically.
+- End with a short CTA (DM, check portfolio, etc.). Portfolio: ahmed.unicon.com.ng
+- No generic opener like "Hi, I saw your post". Jump straight to the value.
+- Sound like a developer talking to another developer, not a cover letter.
 
-Reply only — no preamble or "here is your reply" framing.`;
+Reply only — no quotes, labels, or preamble.`;
 }
 
 // Shown when there is no API key — no network call needed
 export function getGenericReply(post: RedditPost): string {
-  const source = post.sourceName ?? `r/${post.subreddit}`;
-  return `Hi! I came across your post on ${source} and I think I'd be a great fit.
+  return `Full-stack and mobile dev with 4+ years — React Native (Expo), Next.js, Node.js, TypeScript, MongoDB. I've shipped production apps to the Play Store and App Store, built fintech platforms, and authored a cross-framework SDK on npm.
 
-I'm Rufai Ahmed, a full-stack and mobile developer with 4+ years of experience. My core stack is React Native (Expo), Next.js, Node.js, TypeScript, and MongoDB. I've shipped buyer/vendor apps to both the Play Store and App Store, built fintech platforms with real-time transaction features, and created the Outsella Widget SDK — a cross-framework voice assistant published on npm and distributed via CDN.
-
-You can see my work at ahmed.unicon.com.ng or github.com/Rufai-Ahmed. Feel free to DM — happy to share more!`;
+Portfolio: ahmed.unicon.com.ng · GitHub: github.com/Rufai-Ahmed — happy to share more if this looks like a fit.`;
 }
 
 async function callAnthropic(apiKey: string, prompt: string): Promise<string> {
@@ -43,7 +40,7 @@ async function callAnthropic(apiKey: string, prompt: string): Promise<string> {
     },
     body: JSON.stringify({
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 512,
+      max_tokens: 280,
       messages: [{ role: 'user', content: prompt }],
     }),
   });
@@ -64,7 +61,7 @@ async function callGroq(apiKey: string, prompt: string): Promise<string> {
     },
     body: JSON.stringify({
       model: 'llama-3.3-70b-versatile',
-      max_tokens: 512,
+      max_tokens: 280,
       messages: [{ role: 'user', content: prompt }],
     }),
   });
