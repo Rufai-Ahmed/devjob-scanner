@@ -2,10 +2,11 @@
 import "./src/services/backgroundTask";
 
 import React, { useEffect } from "react";
-import { View, ActivityIndicator } from "react-native";
+import { View, ActivityIndicator, Alert } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import * as Notifications from "expo-notifications";
+import * as Updates from "expo-updates";
 import {
   useFonts,
   SpaceMono_400Regular,
@@ -27,6 +28,26 @@ export default function App() {
     if (lastResponse)
       navigateToPost(lastResponse.notification.request.content.data);
   }, [lastResponse]);
+
+  useEffect(() => {
+    async function checkForUpdate() {
+      if (__DEV__) return;
+      try {
+        const result = await Updates.checkForUpdateAsync();
+        if (!result.isAvailable) return;
+        await Updates.fetchUpdateAsync();
+        Alert.alert(
+          "Update ready",
+          "A new version has been downloaded. Restart now to apply it.",
+          [
+            { text: "Later", style: "cancel" },
+            { text: "Restart", onPress: () => Updates.reloadAsync() },
+          ]
+        );
+      } catch {}
+    }
+    checkForUpdate();
+  }, []);
 
   useEffect(() => {
     async function init() {
