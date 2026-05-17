@@ -1,5 +1,5 @@
 import { RedditPost, AppSettings } from '../types';
-import { fetchAllSubreddits, fetchRedditSearch } from './redditService';
+import { fetchAllSubreddits, fetchDiscoverySubreddits, fetchRedditSearch, scorePost } from './redditService';
 import { fetchHNJobs } from './hnService';
 import { fetchRemoteOKJobs } from './remoteOkService';
 import { fetchWWRJobs } from './rssService';
@@ -16,6 +16,9 @@ export async function fetchAllJobs(settings: AppSettings): Promise<RedditPost[]>
   if (settings.searchEnabled && settings.searchTerms?.length > 0) {
     tasks.push(fetchRedditSearch(settings.searchTerms));
   }
+  if (settings.discoveryEnabled && settings.discoverySubreddits?.length > 0 && settings.searchTerms?.length > 0) {
+    tasks.push(fetchDiscoverySubreddits(settings.discoverySubreddits, settings.searchTerms));
+  }
 
   const results = await Promise.allSettled(tasks);
   const all: RedditPost[] = [];
@@ -24,5 +27,8 @@ export async function fetchAllJobs(settings: AppSettings): Promise<RedditPost[]>
     else console.error('[jobService] Source failed:', r.reason);
   });
 
-  return all.sort((a, b) => b.created_utc - a.created_utc);
+  const terms = settings.searchTerms ?? [];
+  return all
+    .map(p => ({ ...p, leadScore: scorePost(p, terms) }))
+    .sort((a, b) => (b.leadScore ?? 0) - (a.leadScore ?? 0));
 }

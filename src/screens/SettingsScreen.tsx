@@ -14,7 +14,7 @@ import {
 import { Colors } from '../constants/colors';
 import { AppSettings, AIProvider } from '../types';
 import { getSettings, saveSettings } from '../services/storageService';
-import { SUBREDDITS, STACK_FILTERS, OTHER_SOURCES } from '../constants/subreddits';
+import { SUBREDDITS, STACK_FILTERS, OTHER_SOURCES, DISCOVERY_SUBREDDITS } from '../constants/subreddits';
 import { getPermissionStatus, requestNotificationPermissions } from '../services/notificationService';
 import { registerBackgroundTask } from '../services/backgroundTask';
 import { AI_PROVIDER_INFO } from '../services/aiService';
@@ -34,6 +34,8 @@ export default function SettingsScreen() {
     geminiApiKey: '',
     searchEnabled: true,
     searchTerms: [],
+    discoveryEnabled: true,
+    discoverySubreddits: [],
   });
   const [permStatus, setPermStatus] = useState('checking...');
   const [apiKeyVisible, setApiKeyVisible] = useState(false);
@@ -208,6 +210,41 @@ export default function SettingsScreen() {
           {settings.searchTerms.length === 0 && (
             <Text style={[styles.sectionHint, { marginBottom: 0 }]}>No terms yet — add one above.</Text>
           )}
+        </View>
+      </View>
+
+      {/* ── Discovery Subreddits ── */}
+      <View style={styles.section}>
+        <Text style={styles.sectionLabel}>Discovery Subreddits</Text>
+        <Text style={styles.sectionHint}>Scans client-heavy subreddits for your search terms. Catches leads that never post in job boards.</Text>
+        <SettingRow label="Enable Discovery">
+          <Switch
+            value={settings.discoveryEnabled}
+            onValueChange={v => persist({ ...settings, discoveryEnabled: v })}
+            trackColor={{ false: Colors.border, true: Colors.purple + '88' }}
+            thumbColor={settings.discoveryEnabled ? Colors.purple : Colors.textMuted}
+          />
+        </SettingRow>
+        <View style={[styles.chipRow, { marginTop: 12 }]}>
+          {DISCOVERY_SUBREDDITS.map((sub, i) => {
+            const active = settings.discoverySubreddits.includes(sub.name);
+            return (
+              <TouchableOpacity
+                key={sub.name}
+                style={[styles.chip, active && { borderColor: Colors.purple, backgroundColor: Colors.purple + '22' }]}
+                onPress={() => {
+                  const next = active
+                    ? settings.discoverySubreddits.filter(s => s !== sub.name)
+                    : [...settings.discoverySubreddits, sub.name];
+                  persist({ ...settings, discoverySubreddits: next });
+                }}
+              >
+                <Text style={[styles.chipText, active && { color: Colors.purple, fontFamily: 'SpaceMono_700Bold' }]}>
+                  {sub.displayName}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </View>
 

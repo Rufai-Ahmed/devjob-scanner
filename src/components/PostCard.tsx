@@ -1,11 +1,12 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { RedditPost } from '../types';
+import { LeadStatus, RedditPost } from '../types';
 import { Colors } from '../constants/colors';
 import { getTraction, formatTimeAgo, isUntouched } from '../services/redditService';
 
 interface Props {
   post: RedditPost;
+  status?: LeadStatus;
   onPress: () => void;
 }
 
@@ -19,15 +20,24 @@ const SOURCE_COLOR: Record<string, string> = {
   hn: '#ff6600',
   remoteok: '#00b2ff',
   weworkremotely: '#6cc644',
+  'reddit-search': '#ff4500',
+  'reddit-discovery': '#7c3aed',
   reddit: Colors.purple,
 };
 
-export default function PostCard({ post, onPress }: Props) {
+const STATUS_CONFIG: Record<LeadStatus, { label: string; color: string }> = {
+  interested: { label: 'INTERESTED', color: Colors.low },
+  replied: { label: 'REPLIED', color: Colors.accent },
+  closed: { label: 'CLOSED', color: Colors.textMuted },
+};
+
+export default function PostCard({ post, status, onPress }: Props) {
   const traction = getTraction(post);
   const untouched = isUntouched(post);
   const { emoji, label, color } = TRACTION_CONFIG[traction];
   const sourceLabel = post.sourceName ?? `r/${post.subreddit}`;
   const sourceColor = SOURCE_COLOR[post.sourceType ?? 'reddit'] ?? Colors.purple;
+  const score = post.leadScore !== undefined ? Math.round(post.leadScore) : null;
 
   return (
     <TouchableOpacity
@@ -36,11 +46,20 @@ export default function PostCard({ post, onPress }: Props) {
       activeOpacity={0.75}
     >
       <View style={styles.headerRow}>
-        <View style={[styles.pill, { backgroundColor: sourceColor + '2a' }]}>
-          <Text style={[styles.pillText, { color: sourceColor }]}>{sourceLabel}</Text>
+        <View style={[styles.pill, { backgroundColor: sourceColor + '2a', flexShrink: 1 }]}>
+          <Text style={[styles.pillText, { color: sourceColor }]} numberOfLines={1}>{sourceLabel}</Text>
         </View>
-        <View style={[styles.pill, { backgroundColor: color + '22' }]}>
-          <Text style={[styles.pillText, { color }]}>{emoji} {label}</Text>
+        <View style={styles.rightPills}>
+          {status && (
+            <View style={[styles.pill, { backgroundColor: STATUS_CONFIG[status].color + '22' }]}>
+              <Text style={[styles.pillText, { color: STATUS_CONFIG[status].color }]}>
+                {STATUS_CONFIG[status].label}
+              </Text>
+            </View>
+          )}
+          <View style={[styles.pill, { backgroundColor: color + '22' }]}>
+            <Text style={[styles.pillText, { color }]}>{emoji} {label}</Text>
+          </View>
         </View>
       </View>
 
@@ -50,6 +69,9 @@ export default function PostCard({ post, onPress }: Props) {
         <Text style={styles.meta}>⏱ {formatTimeAgo(post.created_utc)}</Text>
         <Text style={styles.meta}>⬆ {post.score}</Text>
         <Text style={styles.meta}>💬 {post.num_comments}</Text>
+        {score !== null && (
+          <Text style={[styles.meta, styles.scoreText]}>★ {score}</Text>
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -80,6 +102,11 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     gap: 8,
   },
+  rightPills: {
+    flexDirection: 'row',
+    gap: 6,
+    flexShrink: 0,
+  },
   pill: {
     paddingHorizontal: 9,
     paddingVertical: 3,
@@ -99,10 +126,16 @@ const styles = StyleSheet.create({
   footer: {
     flexDirection: 'row',
     gap: 14,
+    alignItems: 'center',
   },
   meta: {
     color: Colors.textMuted,
     fontFamily: 'SpaceMono_400Regular',
     fontSize: 11,
+  },
+  scoreText: {
+    color: Colors.accent,
+    fontFamily: 'SpaceMono_700Bold',
+    marginLeft: 'auto',
   },
 });

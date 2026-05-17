@@ -97,6 +97,62 @@ export async function fetchAllSubreddits(enabledSubreddits: string[]): Promise<R
   return all.sort((a, b) => b.created_utc - a.created_utc);
 }
 
+export async function fetchDiscoverySubreddits(
+  subreddits: string[],
+  keywords: string[],
+): Promise<RedditPost[]> {
+  if (keywords.length === 0) return [];
+  const lcKeywords = keywords.map(k => k.toLowerCase());
+
+  const results = await Promise.allSettled(
+    subreddits.map(name => fetchSubredditPosts(name))
+  );
+
+  const seen = new Set<string>();
+  const matched: RedditPost[] = [];
+
+  results.forEach(r => {
+    if (r.status !== 'fulfilled') return;
+    r.value.forEach(post => {
+      const haystack = (post.title + ' ' + post.selftext).toLowerCase();
+      const hit = lcKeywords.find(kw => haystack.includes(kw));
+      if (!hit) return;
+      const id = `disc_${post.id}`;
+      if (seen.has(id)) return;
+      seen.add(id);
+      matched.push({
+        ...post,
+        id,
+        sourceType: 'reddit-discovery',
+        sourceName: `r/${post.subreddit} · discovery`,
+      });
+    });
+  });
+
+  return matched.sort((a, b) => b.created_utc - a.created_utc);
+}
+
+export function scorePost(post: RedditPost, searchTerms: string[]): number {
+  const ageHours = (Date.now() / 1000 - post.created_utc) / 3600;
+  const recency = Math.max(0, 1 - ageHours / 72);
+
+  const untouched =
+    post.num_comments === 0 ? 2.5
+    : post.num_comments <= 3 ? 1.5
+    : post.num_comments <= 10 ? 1.0
+    : 0.5;
+
+  const titleLower = post.title.toLowerCase();
+  const keywordBonus = searchTerms.some(t => titleLower.includes(t.toLowerCase())) ? 1.5 : 1.0;
+
+  const sourceBonus =
+    post.sourceType === 'reddit-search' ? 1.4
+    : post.sourceType === 'reddit-discovery' ? 1.2
+    : 1.0;
+
+  return recency * untouched * keywordBonus * sourceBonus * 100;
+}
+
 export function getAgeHours(post: RedditPost): number {
   return (Date.now() / 1000 - post.created_utc) / 3600;
 }

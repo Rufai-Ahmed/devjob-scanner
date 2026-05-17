@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -12,9 +12,9 @@ import {
 import * as Clipboard from 'expo-clipboard';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { Colors } from '../constants/colors';
-import { FeedStackParamList } from '../types';
+import { FeedStackParamList, LeadStatus } from '../types';
 import { getTraction, formatTimeAgo } from '../services/redditService';
-import { getSettings } from '../services/storageService';
+import { getSettings, getLeadStatuses, setLeadStatus } from '../services/storageService';
 import { generateReply, getGenericReply, AI_PROVIDER_INFO } from '../services/aiService';
 
 type RouteType = RouteProp<FeedStackParamList, 'PostDetail'>;
@@ -30,6 +30,17 @@ export default function PostDetailScreen() {
   const [aiReply, setAiReply] = useState('');
   const [isTemplate, setIsTemplate] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [leadStatus, setLeadStatusState] = useState<LeadStatus | null>(null);
+
+  useEffect(() => {
+    getLeadStatuses().then(s => setLeadStatusState(s[post.id] ?? null));
+  }, [post.id]);
+
+  async function handleStatusPress(status: LeadStatus) {
+    const next = leadStatus === status ? null : status;
+    setLeadStatusState(next);
+    await setLeadStatus(post.id, next);
+  }
 
   const traction = getTraction(post);
   const { emoji, label, color } = TRACTION_CONFIG[traction];
@@ -121,6 +132,33 @@ export default function PostDetailScreen() {
       <TouchableOpacity style={styles.linkButton} onPress={openOnReddit} activeOpacity={0.75}>
         <Text style={styles.linkButtonText}>↗ Open Original Post</Text>
       </TouchableOpacity>
+
+      {/* Lead Status */}
+      <View style={styles.statusSection}>
+        <Text style={styles.statusTitle}>Track this lead</Text>
+        <View style={styles.statusRow}>
+          {(['interested', 'replied', 'closed'] as LeadStatus[]).map(s => {
+            const active = leadStatus === s;
+            const cfg = {
+              interested: { label: '👀 Interested', color: Colors.low },
+              replied: { label: '✓ Replied', color: Colors.accent },
+              closed: { label: '✕ Closed', color: Colors.textMuted },
+            }[s];
+            return (
+              <TouchableOpacity
+                key={s}
+                style={[styles.statusBtn, { borderColor: cfg.color }, active && { backgroundColor: cfg.color + '22' }]}
+                onPress={() => handleStatusPress(s)}
+                activeOpacity={0.75}
+              >
+                <Text style={[styles.statusBtnText, { color: active ? cfg.color : Colors.textMuted }]}>
+                  {cfg.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </View>
 
       {/* AI Section */}
       <View style={styles.aiSection}>
@@ -214,6 +252,24 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.purple + '11',
   },
   linkButtonText: { color: Colors.purple, fontFamily: 'SpaceMono_700Bold', fontSize: 13 },
+  statusSection: { marginBottom: 24 },
+  statusTitle: {
+    color: Colors.textMuted,
+    fontFamily: 'SpaceMono_700Bold',
+    fontSize: 10,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    marginBottom: 10,
+  },
+  statusRow: { flexDirection: 'row', gap: 8 },
+  statusBtn: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: 9,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  statusBtnText: { fontFamily: 'SpaceMono_700Bold', fontSize: 10 },
   aiSection: { borderTopWidth: 1, borderTopColor: Colors.border, paddingTop: 22 },
   aiTitle: {
     color: Colors.accent,

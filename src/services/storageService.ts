@@ -1,11 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AppSettings, RedditPost } from '../types';
+import { AppSettings, LeadStatus, RedditPost } from '../types';
 
 const KEYS = {
   SEEN_POSTS: 'seen_post_ids',
   SETTINGS: 'app_settings',
   LAST_SCAN: 'last_scan_time',
   CACHED_POSTS: 'cached_posts',
+  LEAD_STATUSES: 'lead_statuses',
 };
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -20,6 +21,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   geminiApiKey: "AIzaSyD4U7GH0KeXHgqDqVio8GJHc7diLLwIddk",
   searchEnabled: true,
   searchTerms: ["need a website", "need a developer", "need a mobile app", "looking for a developer", "need web developer"],
+  discoveryEnabled: true,
+  discoverySubreddits: ["entrepreneur", "smallbusiness", "startups", "SideProject", "forhire"],
 };
 
 export async function getSeenPostIds(): Promise<Set<string>> {
@@ -82,4 +85,24 @@ export async function getCachedPosts(): Promise<RedditPost[]> {
 
 export async function saveCachedPosts(posts: RedditPost[]): Promise<void> {
   await AsyncStorage.setItem(KEYS.CACHED_POSTS, JSON.stringify(posts.slice(0, 150)));
+}
+
+export async function getLeadStatuses(): Promise<Record<string, LeadStatus>> {
+  try {
+    const raw = await AsyncStorage.getItem(KEYS.LEAD_STATUSES);
+    if (!raw) return {};
+    return JSON.parse(raw) as Record<string, LeadStatus>;
+  } catch {
+    return {};
+  }
+}
+
+export async function setLeadStatus(postId: string, status: LeadStatus | null): Promise<void> {
+  const statuses = await getLeadStatuses();
+  if (status === null) {
+    delete statuses[postId];
+  } else {
+    statuses[postId] = status;
+  }
+  await AsyncStorage.setItem(KEYS.LEAD_STATUSES, JSON.stringify(statuses));
 }

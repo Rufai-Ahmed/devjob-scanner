@@ -1,4 +1,5 @@
-export type SourceType = 'reddit' | 'hn' | 'remoteok' | 'weworkremotely' | 'reddit-search';
+export type SourceType = 'reddit' | 'hn' | 'remoteok' | 'weworkremotely' | 'reddit-search' | 'reddit-discovery';
+export type LeadStatus = 'interested' | 'replied' | 'closed';
 export type AIProvider = 'anthropic' | 'groq' | 'gemini';
 
 export interface RedditPost {
@@ -15,6 +16,7 @@ export interface RedditPost {
   // Optional — absent means Reddit
   sourceType?: SourceType;
   sourceName?: string;
+  leadScore?: number;
 }
 
 export interface AppSettings {
@@ -29,6 +31,8 @@ export interface AppSettings {
   geminiApiKey: string;
   searchEnabled: boolean;
   searchTerms: string[];
+  discoveryEnabled: boolean;
+  discoverySubreddits: string[];
 }
 
 export type RootTabParamList = {

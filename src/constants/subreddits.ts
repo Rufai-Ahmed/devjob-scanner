@@ -13,3 +13,15 @@ export const OTHER_SOURCES = [
 export const STACK_FILTERS = ['Frontend', 'Backend', 'Full Stack', 'Mobile'];
 
 export const BACKGROUND_TASK_NAME = 'REDDIT_JOB_SCAN';
+
+// Subreddits where potential clients hang out (not job boards)
+export const DISCOVERY_SUBREDDITS = [
+  { name: 'entrepreneur', displayName: 'r/entrepreneur' },
+  { name: 'smallbusiness', displayName: 'r/smallbusiness' },
+  { name: 'startups', displayName: 'r/startups' },
+  { name: 'SideProject', displayName: 'r/SideProject' },
+  { name: 'webdev', displayName: 'r/webdev' },
+  { name: 'digitalnomad', displayName: 'r/digitalnomad' },
+  { name: 'ecommerce', displayName: 'r/ecommerce' },
+  { name: 'agency', displayName: 'r/agency' },
+];
