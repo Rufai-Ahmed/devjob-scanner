@@ -29,9 +29,13 @@ export async function requestNotificationPermissions(): Promise<boolean> {
 }
 
 export async function sendJobNotification(post: RedditPost): Promise<void> {
+  const isLead = post.sourceType === 'reddit-search';
+  const title = isLead
+    ? `🔥 New lead in r/${post.subreddit}`
+    : `🟢 Untouched in r/${post.subreddit}`;
   await Notifications.scheduleNotificationAsync({
     content: {
-      title: `🟢 Untouched in r/${post.subreddit}`,
+      title,
       body: post.title,
       data: { post: JSON.stringify(post) },
       sound: 'default',

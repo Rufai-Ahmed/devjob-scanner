@@ -3,9 +3,7 @@
     "name": "DevJob Scanner",
     "slug": "devjob-scanner",
     "version": "1.0.0",
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
+    "runtimeVersion": "1.0.0",
     "updates": {
       "url": "https://u.expo.dev/aabb98d8-0054-41d1-8360-53b316e84029",
       "checkAutomatically": "ON_LOAD",

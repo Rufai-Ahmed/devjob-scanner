@@ -32,10 +32,13 @@ export default function SettingsScreen() {
     anthropicApiKey: '',
     groqApiKey: '',
     geminiApiKey: '',
+    searchEnabled: true,
+    searchTerms: [],
   });
   const [permStatus, setPermStatus] = useState('checking...');
   const [apiKeyVisible, setApiKeyVisible] = useState(false);
   const [pendingKey, setPendingKey] = useState('');
+  const [newTerm, setNewTerm] = useState('');
 
   useEffect(() => {
     getSettings().then(s => {
@@ -148,6 +151,65 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         </View>
       )}
+
+      {/* ── Lead Search ── */}
+      <View style={styles.section}>
+        <Text style={styles.sectionLabel}>Lead Search</Text>
+        <Text style={styles.sectionHint}>Scans all of Reddit for people asking for a developer. Fresh posts only (last 24h).</Text>
+        <SettingRow label="Enable Lead Search">
+          <Switch
+            value={settings.searchEnabled}
+            onValueChange={v => persist({ ...settings, searchEnabled: v })}
+            trackColor={{ false: Colors.border, true: Colors.accent + '55' }}
+            thumbColor={settings.searchEnabled ? Colors.accent : Colors.textMuted}
+          />
+        </SettingRow>
+        <View style={[styles.apiKeyRow, { marginTop: 12 }]}>
+          <TextInput
+            style={styles.apiKeyInput}
+            value={newTerm}
+            onChangeText={setNewTerm}
+            placeholder='e.g. "need a website"'
+            placeholderTextColor={Colors.textSubtle}
+            autoCapitalize="none"
+            autoCorrect={false}
+            returnKeyType="done"
+            onSubmitEditing={() => {
+              const t = newTerm.trim();
+              if (t && !settings.searchTerms.includes(t)) {
+                persist({ ...settings, searchTerms: [...settings.searchTerms, t] });
+              }
+              setNewTerm('');
+            }}
+          />
+          <TouchableOpacity
+            style={styles.eyeBtn}
+            onPress={() => {
+              const t = newTerm.trim();
+              if (t && !settings.searchTerms.includes(t)) {
+                persist({ ...settings, searchTerms: [...settings.searchTerms, t] });
+              }
+              setNewTerm('');
+            }}
+          >
+            <Text style={[styles.outlineButtonText, { fontSize: 18 }]}>+</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={[styles.chipRow, { marginTop: 12 }]}>
+          {settings.searchTerms.map(term => (
+            <TouchableOpacity
+              key={term}
+              style={[styles.chip, styles.chipActive]}
+              onPress={() => persist({ ...settings, searchTerms: settings.searchTerms.filter(t => t !== term) })}
+            >
+              <Text style={styles.chipTextActive}>{term} ✕</Text>
+            </TouchableOpacity>
+          ))}
+          {settings.searchTerms.length === 0 && (
+            <Text style={[styles.sectionHint, { marginBottom: 0 }]}>No terms yet — add one above.</Text>
+          )}
+        </View>
+      </View>
 
       {/* ── Reddit Subreddits ── */}
       <View style={styles.section}>

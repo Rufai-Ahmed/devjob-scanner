@@ -47,6 +47,45 @@ export async function fetchSubredditPosts(subredditName: string): Promise<Reddit
   }
 }
 
+export async function fetchRedditSearch(terms: string[]): Promise<RedditPost[]> {
+  const results = await Promise.allSettled(
+    terms.map(async term => {
+      const q = encodeURIComponent(term);
+      const url = `${REDDIT_BASE}/search.json?q=${q}&sort=new&t=day&limit=25&raw_json=1`;
+      const response = await fetch(url, {
+        headers: { 'User-Agent': 'DevJobScanner/1.0 (personal app)' },
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const json = (await response.json()) as RedditApiResponse;
+      return json.data.children.map(c => ({
+        id: `search_${c.data.id}`,
+        title: c.data.title,
+        selftext: c.data.selftext ?? '',
+        subreddit: c.data.subreddit,
+        author: c.data.author,
+        created_utc: c.data.created_utc,
+        num_comments: c.data.num_comments,
+        score: c.data.score,
+        permalink: c.data.permalink,
+        url: `${REDDIT_BASE}${c.data.permalink}`,
+        sourceType: 'reddit-search' as const,
+        sourceName: `Reddit · "${term}"`,
+      }));
+    })
+  );
+
+  const seen = new Set<string>();
+  const all: RedditPost[] = [];
+  results.forEach(r => {
+    if (r.status === 'fulfilled') {
+      r.value.forEach(p => {
+        if (!seen.has(p.id)) { seen.add(p.id); all.push(p); }
+      });
+    }
+  });
+  return all.sort((a, b) => b.created_utc - a.created_utc);
+}
+
 export async function fetchAllSubreddits(enabledSubreddits: string[]): Promise<RedditPost[]> {
   const results = await Promise.allSettled(
     enabledSubreddits.map(name => fetchSubredditPosts(name))

@@ -1,5 +1,5 @@
 import { RedditPost, AppSettings } from '../types';
-import { fetchAllSubreddits } from './redditService';
+import { fetchAllSubreddits, fetchRedditSearch } from './redditService';
 import { fetchHNJobs } from './hnService';
 import { fetchRemoteOKJobs } from './remoteOkService';
 import { fetchWWRJobs } from './rssService';
@@ -13,6 +13,9 @@ export async function fetchAllJobs(settings: AppSettings): Promise<RedditPost[]>
   if (settings.enabledSources?.includes('hn')) tasks.push(fetchHNJobs());
   if (settings.enabledSources?.includes('remoteok')) tasks.push(fetchRemoteOKJobs());
   if (settings.enabledSources?.includes('weworkremotely')) tasks.push(fetchWWRJobs());
+  if (settings.searchEnabled && settings.searchTerms?.length > 0) {
+    tasks.push(fetchRedditSearch(settings.searchTerms));
+  }
 
   const results = await Promise.allSettled(tasks);
   const all: RedditPost[] = [];

@@ -18,6 +18,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   anthropicApiKey: "",
   groqApiKey: "",
   geminiApiKey: "AIzaSyD4U7GH0KeXHgqDqVio8GJHc7diLLwIddk",
+  searchEnabled: true,
+  searchTerms: ["need a website", "need a developer", "need a mobile app", "looking for a developer", "need web developer"],
 };
 
 export async function getSeenPostIds(): Promise<Set<string>> {

@@ -1,4 +1,4 @@
-export type SourceType = 'reddit' | 'hn' | 'remoteok' | 'weworkremotely';
+export type SourceType = 'reddit' | 'hn' | 'remoteok' | 'weworkremotely' | 'reddit-search';
 export type AIProvider = 'anthropic' | 'groq' | 'gemini';
 
 export interface RedditPost {
@@ -27,6 +27,8 @@ export interface AppSettings {
   anthropicApiKey: string;
   groqApiKey: string;
   geminiApiKey: string;
+  searchEnabled: boolean;
+  searchTerms: string[];
 }
 
 export type RootTabParamList = {
