@@ -57,20 +57,23 @@ export async function fetchRedditSearch(terms: string[]): Promise<RedditPost[]> 
       });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const json = (await response.json()) as RedditApiResponse;
-      return json.data.children.map(c => ({
-        id: `search_${c.data.id}`,
-        title: c.data.title,
-        selftext: c.data.selftext ?? '',
-        subreddit: c.data.subreddit,
-        author: c.data.author,
-        created_utc: c.data.created_utc,
-        num_comments: c.data.num_comments,
-        score: c.data.score,
-        permalink: c.data.permalink,
-        url: `${REDDIT_BASE}${c.data.permalink}`,
-        sourceType: 'reddit-search' as const,
-        sourceName: `Reddit · "${term}"`,
-      }));
+      const lcTerm = term.toLowerCase();
+      return json.data.children
+        .filter(c => c.data.title.toLowerCase().includes(lcTerm))
+        .map(c => ({
+          id: `search_${c.data.id}`,
+          title: c.data.title,
+          selftext: c.data.selftext ?? '',
+          subreddit: c.data.subreddit,
+          author: c.data.author,
+          created_utc: c.data.created_utc,
+          num_comments: c.data.num_comments,
+          score: c.data.score,
+          permalink: c.data.permalink,
+          url: `${REDDIT_BASE}${c.data.permalink}`,
+          sourceType: 'reddit-search' as const,
+          sourceName: `Reddit · "${term}"`,
+        }));
     })
   );
 
@@ -114,8 +117,9 @@ export async function fetchDiscoverySubreddits(
   results.forEach(r => {
     if (r.status !== 'fulfilled') return;
     r.value.forEach(post => {
-      const haystack = (post.title + ' ' + post.selftext).toLowerCase();
-      const hit = lcKeywords.find(kw => haystack.includes(kw));
+      // Title-only match — body mentions are too noisy
+      const titleLower = post.title.toLowerCase();
+      const hit = lcKeywords.find(kw => titleLower.includes(kw));
       if (!hit) return;
       const id = `disc_${post.id}`;
       if (seen.has(id)) return;

@@ -108,10 +108,16 @@ export default function FeedScreen() {
     }
   }, []);
 
-  const filteredPosts = posts.filter(p => {
-    if (filter === 'leads') {
-      return p.sourceType === 'reddit-search' || p.sourceType === 'reddit-discovery';
-    }
+  const isLead = (p: RedditPost) =>
+    p.sourceType === 'reddit-search' || p.sourceType === 'reddit-discovery';
+
+  // Drop low-signal lead/discovery posts — job board posts always show
+  const visiblePosts = posts.filter(p =>
+    !isLead(p) || (p.leadScore ?? 0) >= 12
+  );
+
+  const filteredPosts = visiblePosts.filter(p => {
+    if (filter === 'leads') return isLead(p);
     if (filter === 'interested') return statuses[p.id] === 'interested';
     if (filter === 'replied') return statuses[p.id] === 'replied';
     return true;
@@ -139,9 +145,9 @@ export default function FeedScreen() {
       {/* Filter tabs */}
       <View style={styles.filterRow}>
         {FILTERS.map(f => {
-          const count = f.key === 'all' ? posts.length
-            : f.key === 'leads' ? posts.filter(p => p.sourceType === 'reddit-search' || p.sourceType === 'reddit-discovery').length
-            : posts.filter(p => statuses[p.id] === f.key).length;
+          const count = f.key === 'all' ? visiblePosts.length
+            : f.key === 'leads' ? visiblePosts.filter(isLead).length
+            : visiblePosts.filter(p => statuses[p.id] === f.key).length;
           const active = filter === f.key;
           return (
             <TouchableOpacity
