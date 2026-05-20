@@ -29,6 +29,20 @@ app.post('/scan', async (_req, res) => {
   }
 });
 
+app.post('/test-push', async (_req, res) => {
+  const { notifyAll } = await import('./push');
+  await notifyAll([{
+    id: 'test',
+    title: 'Need a developer for my startup ASAP',
+    subreddit: 'entrepreneur',
+    permalink: '/r/entrepreneur/test',
+    created_utc: Date.now() / 1000,
+    num_comments: 0,
+    isLead: true,
+  }]);
+  res.json({ ok: true, message: 'Test push sent — check logs and your phone' });
+});
+
 async function start() {
   await connectDB();
   console.log('DB connected');
