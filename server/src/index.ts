@@ -20,6 +20,15 @@ app.get('/devices', async (_req, res) => {
   res.json({ count: devices.length, devices });
 });
 
+app.post('/scan', async (_req, res) => {
+  res.json({ ok: true, message: 'Scan triggered — check logs' });
+  try {
+    await runScan();
+  } catch (e) {
+    console.error('Manual scan error', e);
+  }
+});
+
 async function start() {
   await connectDB();
   console.log('DB connected');
