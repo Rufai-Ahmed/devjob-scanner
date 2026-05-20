@@ -17,6 +17,7 @@ import { requestNotificationPermissions } from "./src/services/notificationServi
 import { registerBackgroundTask } from "./src/services/backgroundTask";
 import { getSettings } from "./src/services/storageService";
 import { Colors } from "./src/constants/colors";
+import { SERVER_URL } from "./src/constants/server";
 import { RedditPost } from "./src/types";
 
 export default function App() {
@@ -54,6 +55,14 @@ export default function App() {
       await requestNotificationPermissions();
       const settings = await getSettings();
       await registerBackgroundTask(settings.fetchInterval);
+      try {
+        const { data: token } = await Notifications.getExpoPushTokenAsync();
+        await fetch(`${SERVER_URL}/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token }),
+        });
+      } catch {}
     }
     init();
 

@@ -10,7 +10,10 @@ import {
   Platform,
   StatusBar,
   Linking,
+  Alert,
 } from 'react-native';
+import * as Notifications from 'expo-notifications';
+import * as Clipboard from 'expo-clipboard';
 import { Colors } from '../constants/colors';
 import { AppSettings, AIProvider } from '../types';
 import { getSettings, saveSettings } from '../services/storageService';
@@ -139,6 +142,22 @@ export default function SettingsScreen() {
             <Text style={styles.outlineButtonText}>Request Permission</Text>
           </TouchableOpacity>
         )}
+        <TouchableOpacity
+          style={[styles.outlineButton, { marginTop: 8 }]}
+          onPress={async () => {
+            try {
+              const { data } = await Notifications.getExpoPushTokenAsync({
+                projectId: 'aabb98d8-0054-41d1-8360-53b316e84029',
+              });
+              await Clipboard.setStringAsync(data);
+              Alert.alert('Copied!', `Push token copied.\n\nPaste it as EXPO_PUSH_TOKENS in your Render dashboard.\n\n${data}`);
+            } catch (e: any) {
+              Alert.alert('Error', e.message);
+            }
+          }}
+        >
+          <Text style={styles.outlineButtonText}>Copy Push Token (for Render)</Text>
+        </TouchableOpacity>
       </View>
 
       {/* ── Battery Optimization (Android only) ── */}
