@@ -20,13 +20,13 @@ async function filterUnseen(posts: Post[]): Promise<Post[]> {
 
 export async function runScan(): Promise<void> {
   const [boards, leads, discovery] = await Promise.all([
-    fetchJobBoards(JOB_SUBREDDITS),
-    fetchSearchLeads(SEARCH_TERMS),
-    fetchDiscovery(DISCOVERY_SUBREDDITS, SEARCH_TERMS),
+    fetchJobBoards(JOB_SUBREDDITS).then(r => { console.log(`Boards (post-filter): ${r.length}`); return r; }),
+    fetchSearchLeads(SEARCH_TERMS).then(r => { console.log(`Leads (post-filter): ${r.length}`); return r; }),
+    fetchDiscovery(DISCOVERY_SUBREDDITS, SEARCH_TERMS).then(r => { console.log(`Discovery (post-filter): ${r.length}`); return r; }),
   ]);
 
   const all = [...boards, ...leads, ...discovery];
-  console.log(`Found: ${boards.length} boards, ${leads.length} leads, ${discovery.length} discovery`);
+  console.log(`Total found: ${all.length}`);
   const unseen = await filterUnseen(all);
   console.log(`Unseen: ${unseen.length}`);
   if (unseen.length) await notifyAll(unseen);
