@@ -39,3 +39,5 @@ yarn-error.*
 # generated native folders
 /ios
 # /android
+
+jobscanner-5d477-firebase-adminsdk-fbsvc-2d9464221f.json

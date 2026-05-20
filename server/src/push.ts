@@ -24,14 +24,12 @@ export async function notifyAll(posts: Post[]): Promise<void> {
   for (let i = 0; i < messages.length; i += 100) chunks.push(messages.slice(i, i + 100));
 
   await Promise.all(
-    chunks.map(async chunk => {
-      const res = await fetch(EXPO_PUSH_URL, {
+    chunks.map(chunk =>
+      fetch(EXPO_PUSH_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify(chunk),
-      });
-      const json = await res.json();
-      console.log('Expo push response:', JSON.stringify(json));
-    })
+      })
+    )
   );
 }
