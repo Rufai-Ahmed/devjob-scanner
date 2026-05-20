@@ -7,7 +7,20 @@ function buildMessage(post: Post) {
   const title = post.isLead
     ? `🔥 New lead in r/${post.subreddit}`
     : `🟢 Untouched in r/${post.subreddit}`;
-  return { title, body: post.title, data: { permalink: post.permalink } };
+  const redditPost = {
+    id: post.id,
+    title: post.title,
+    selftext: '',
+    subreddit: post.subreddit,
+    author: '',
+    created_utc: post.created_utc,
+    num_comments: post.num_comments,
+    score: 0,
+    permalink: post.permalink,
+    url: `https://www.reddit.com${post.permalink}`,
+    sourceType: post.isLead ? 'reddit-search' : 'reddit',
+  };
+  return { title, body: post.title, data: { post: JSON.stringify(redditPost) } };
 }
 
 export async function notifyAll(posts: Post[]): Promise<void> {
