@@ -26,6 +26,8 @@ export async function runScan(): Promise<void> {
   ]);
 
   const all = [...boards, ...leads, ...discovery];
+  console.log(`Found: ${boards.length} boards, ${leads.length} leads, ${discovery.length} discovery`);
   const unseen = await filterUnseen(all);
+  console.log(`Unseen: ${unseen.length}`);
   if (unseen.length) await notifyAll(unseen);
 }

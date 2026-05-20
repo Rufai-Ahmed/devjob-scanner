@@ -15,6 +15,11 @@ app.post('/register', async (req, res) => {
 
 app.get('/health', (_req, res) => res.json({ ok: true, time: new Date().toISOString() }));
 
+app.get('/devices', async (_req, res) => {
+  const devices = await Device.find({}, 'token updatedAt').lean();
+  res.json({ count: devices.length, devices });
+});
+
 async function start() {
   await connectDB();
   console.log('DB connected');

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "903431968894",
+    "project_id": "jobscanner-5d477",
+    "storage_bucket": "jobscanner-5d477.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:903431968894:android:fb98e34e162859c8ab602f",
+        "android_client_info": {
+          "package_name": "com.rufaiahmed.devjobscanner"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC4R-a-D74XxtPw_cPGpVPqsL313Fl5hR8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
