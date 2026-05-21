@@ -2,9 +2,9 @@ import { SeenPost } from './db';
 import { fetchJobBoards, fetchSearchLeads, fetchDiscovery, type Post } from './reddit';
 import { notifyAll } from './push';
 
-const JOB_SUBREDDITS = ['forhire', 'freelance', 'slavelabour', 'hiring'];
-const DISCOVERY_SUBREDDITS = ['entrepreneur', 'smallbusiness', 'startups', 'SideProject', 'webdev'];
-const SEARCH_TERMS = ['need a developer', 'looking for developer', 'hire a developer', 'need a website', 'need website', 'looking for freelancer', 'need freelancer', 'need a freelancer'];
+const JOB_SUBREDDITS = ['forhire', 'WebDevJobs', 'Programmers_forhire', 'freelance', 'slavelabour', 'hiring'];
+const DISCOVERY_SUBREDDITS = ['entrepreneur', 'smallbusiness', 'startups', 'SideProject', 'webdev', 'digitalnomad', 'ecommerce', 'agency'];
+const SEARCH_TERMS = ['need a developer', 'need a mobile app', 'need web developer', 'looking for developer', 'looking for a developer', 'hire a developer', 'need a website', 'need website', 'looking for freelancer', 'need freelancer', 'need a freelancer'];
 
 async function filterUnseen(posts: Post[]): Promise<Post[]> {
   const ids = posts.map(p => p.id);
