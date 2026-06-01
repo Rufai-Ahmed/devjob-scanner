@@ -22,6 +22,7 @@ const SOURCE_COLOR: Record<string, string> = {
   weworkremotely: '#6cc644',
   'reddit-search': '#ff4500',
   'reddit-discovery': '#7c3aed',
+  craigslist: '#6b21a8',
   reddit: Colors.purple,
 };
 
@@ -35,7 +36,7 @@ export default function PostCard({ post, status, onPress }: Props) {
   const traction = getTraction(post);
   const untouched = isUntouched(post);
   const { emoji, label, color } = TRACTION_CONFIG[traction];
-  const sourceLabel = post.sourceName ?? `r/${post.subreddit}`;
+  const sourceLabel = post.sourceName ?? (post.sourceType === 'craigslist' ? `CL/${post.subreddit}` : `r/${post.subreddit}`);
   const sourceColor = SOURCE_COLOR[post.sourceType ?? 'reddit'] ?? Colors.purple;
   const score = post.leadScore !== undefined ? Math.round(post.leadScore) : null;
 

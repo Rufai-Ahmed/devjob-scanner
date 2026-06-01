@@ -4,10 +4,13 @@ import type { Post } from './reddit';
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
 
 function buildMessage(post: Post) {
-  const title = post.isLead
-    ? `🔥 New lead in r/${post.subreddit}`
-    : `🟢 Untouched in r/${post.subreddit}`;
-  const redditPost = {
+  const isCL = post.source === 'craigslist';
+  const title = isCL
+    ? `🔥 New lead on Craigslist (${post.subreddit})`
+    : post.isLead
+      ? `🔥 New lead in r/${post.subreddit}`
+      : `🟢 Untouched in r/${post.subreddit}`;
+  const appPost = {
     id: post.id,
     title: post.title,
     selftext: '',
@@ -17,10 +20,10 @@ function buildMessage(post: Post) {
     num_comments: post.num_comments,
     score: 0,
     permalink: post.permalink,
-    url: `https://www.reddit.com${post.permalink}`,
-    sourceType: post.isLead ? 'reddit-search' : 'reddit',
+    url: isCL ? post.permalink : `https://www.reddit.com${post.permalink}`,
+    sourceType: isCL ? 'craigslist' : post.isLead ? 'reddit-search' : 'reddit',
   };
-  return { title, body: post.title, data: { post: JSON.stringify(redditPost) } };
+  return { title, body: post.title, data: { post: JSON.stringify(appPost) } };
 }
 
 export async function notifyAll(posts: Post[]): Promise<void> {

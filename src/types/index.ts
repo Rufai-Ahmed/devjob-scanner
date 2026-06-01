@@ -1,4 +1,4 @@
-export type SourceType = 'reddit' | 'hn' | 'remoteok' | 'weworkremotely' | 'reddit-search' | 'reddit-discovery';
+export type SourceType = 'reddit' | 'hn' | 'remoteok' | 'weworkremotely' | 'reddit-search' | 'reddit-discovery' | 'craigslist';
 export type LeadStatus = 'interested' | 'replied' | 'closed';
 export type AIProvider = 'anthropic' | 'groq' | 'gemini';
 

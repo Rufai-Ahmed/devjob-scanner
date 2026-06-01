@@ -39,6 +39,7 @@ app.post('/test-push', async (_req, res) => {
     created_utc: Date.now() / 1000,
     num_comments: 0,
     isLead: true,
+    source: 'reddit',
   }]);
   res.json({ ok: true, message: 'Test push sent — check logs and your phone' });
 });

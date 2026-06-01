@@ -1,5 +1,7 @@
+import { batchMap } from './utils';
+
 const BASE = 'https://www.reddit.com';
-const HEADERS = { 'User-Agent': 'DevJobScanner/1.0' };
+const HEADERS = { 'User-Agent': 'DevJobScanner/2.0' };
 const MAX_AGE_MINUTES = 20;
 
 export interface Post {
@@ -10,6 +12,7 @@ export interface Post {
   created_utc: number;
   num_comments: number;
   isLead: boolean;
+  source: 'reddit' | 'craigslist';
 }
 
 async function redditGet(url: string): Promise<any[]> {
@@ -36,35 +39,29 @@ function isFresh(p: any): boolean {
 }
 
 function toPost(p: any, id: string, isLead: boolean): Post {
-  return { id, title: p.title, subreddit: p.subreddit, permalink: p.permalink, created_utc: p.created_utc, num_comments: p.num_comments, isLead };
+  return { id, title: p.title, subreddit: p.subreddit, permalink: p.permalink, created_utc: p.created_utc, num_comments: p.num_comments, isLead, source: 'reddit' };
 }
 
 export async function fetchJobBoards(subreddits: string[]): Promise<Post[]> {
-  const results = await Promise.all(
-    subreddits.map(sub => redditGet(`${BASE}/r/${sub}/new.json?limit=25&raw_json=1`))
-  );
+  const results = await batchMap(subreddits, sub => redditGet(`${BASE}/r/${sub}/new.json?limit=25&raw_json=1`));
   return results.flat().filter(isFresh).map(p => toPost(p, p.id, false));
 }
 
 export async function fetchSearchLeads(terms: string[]): Promise<Post[]> {
-  const results = await Promise.all(
-    terms.map(async term => {
-      const q = encodeURIComponent(`title:"${term}"`);
-      const posts = await redditGet(`${BASE}/search.json?q=${q}&sort=new&t=hour&limit=25&raw_json=1`);
-      return posts
-        .filter(p => p.title.toLowerCase().includes(term.toLowerCase()) && isRecent(p))
-        .map(p => toPost(p, `search_${p.id}`, true));
-    })
-  );
+  const results = await batchMap(terms, async term => {
+    const q = encodeURIComponent(`title:"${term}"`);
+    const posts = await redditGet(`${BASE}/search.json?q=${q}&sort=new&t=hour&limit=25&raw_json=1`);
+    return posts
+      .filter(p => p.title.toLowerCase().includes(term.toLowerCase()) && isRecent(p))
+      .map(p => toPost(p, `search_${p.id}`, true));
+  });
   return results.flat();
 }
 
 export async function fetchDiscovery(subreddits: string[], keywords: string[]): Promise<Post[]> {
   if (!keywords.length) return [];
   const lc = keywords.map(k => k.toLowerCase());
-  const results = await Promise.all(
-    subreddits.map(sub => redditGet(`${BASE}/r/${sub}/new.json?limit=25&raw_json=1`))
-  );
+  const results = await batchMap(subreddits, sub => redditGet(`${BASE}/r/${sub}/new.json?limit=25&raw_json=1`));
   return results.flat()
     .filter(p => lc.some(kw => p.title.toLowerCase().includes(kw)) && isRecent(p))
     .map(p => toPost(p, `disc_${p.id}`, true));
