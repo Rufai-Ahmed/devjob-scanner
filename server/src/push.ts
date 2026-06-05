@@ -1,15 +1,19 @@
 import { Device } from './db';
 import type { Post } from './reddit';
+import { fetchWithTimeout } from './utils';
 
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
+const CHUNK_SIZE = 100;
 
 function buildMessage(post: Post) {
   const isCL = post.source === 'craigslist';
-  const title = isCL
-    ? `🔥 New lead on Craigslist (${post.subreddit})`
-    : post.isLead
-      ? `🔥 New lead in r/${post.subreddit}`
-      : `🟢 Untouched in r/${post.subreddit}`;
+  const title = post.recruit
+    ? `🎯 Recruit prospect in r/${post.subreddit}`
+    : isCL
+      ? `🔥 New lead on Craigslist (${post.subreddit})`
+      : post.isLead
+        ? `🔥 New lead in r/${post.subreddit}`
+        : `🟢 Untouched in r/${post.subreddit}`;
   const appPost = {
     id: post.id,
     title: post.title,
@@ -36,16 +40,31 @@ export async function notifyAll(posts: Post[]): Promise<void> {
     posts.map(post => ({ to: d.token, sound: 'default', ...buildMessage(post) }))
   );
 
-  const chunks: typeof messages[] = [];
-  for (let i = 0; i < messages.length; i += 100) chunks.push(messages.slice(i, i + 100));
+  const deadTokens = new Set<string>();
 
-  await Promise.all(
-    chunks.map(chunk =>
-      fetch(EXPO_PUSH_URL, {
+  // Send chunks sequentially — bounds memory and avoids hammering Expo.
+  for (let i = 0; i < messages.length; i += CHUNK_SIZE) {
+    const chunk = messages.slice(i, i + CHUNK_SIZE);
+    try {
+      const res = await fetchWithTimeout(EXPO_PUSH_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify(chunk),
-      })
-    )
-  );
+      });
+      const json = await res.json().catch(() => null) as any;
+      const tickets: any[] = json?.data ?? [];
+      tickets.forEach((t, idx) => {
+        if (t?.status === 'error' && t?.details?.error === 'DeviceNotRegistered') {
+          deadTokens.add(chunk[idx].to);
+        }
+      });
+    } catch (e) {
+      console.error('Push chunk failed:', e);
+    }
+  }
+
+  if (deadTokens.size) {
+    await Device.deleteMany({ token: { $in: [...deadTokens] } }).catch(() => {});
+    console.log(`Pruned ${deadTokens.size} dead push token(s)`);
+  }
 }

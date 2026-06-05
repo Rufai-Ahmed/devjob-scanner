@@ -4,7 +4,26 @@ import { connectDB, Device } from './db';
 import { runScan } from './scanner';
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: '16kb' }));
+
+// Guard against overlapping scans — a hung scan must not stack new ones on top.
+let scanning = false;
+async function safeScan(trigger: string): Promise<void> {
+  if (scanning) {
+    console.warn(`Scan (${trigger}) skipped — previous scan still running`);
+    return;
+  }
+  scanning = true;
+  const started = Date.now();
+  try {
+    await runScan();
+    console.log(`Scan (${trigger}) done in ${Date.now() - started}ms`);
+  } catch (e) {
+    console.error(`Scan (${trigger}) error:`, e);
+  } finally {
+    scanning = false;
+  }
+}
 
 app.post('/register', async (req, res) => {
   const { token } = req.body as { token?: string };
@@ -20,13 +39,9 @@ app.get('/devices', async (_req, res) => {
   res.json({ count: devices.length, devices });
 });
 
-app.post('/scan', async (_req, res) => {
+app.post('/scan', (_req, res) => {
   res.json({ ok: true, message: 'Scan triggered — check logs' });
-  try {
-    await runScan();
-  } catch (e) {
-    console.error('Manual scan error', e);
-  }
+  void safeScan('manual');
 });
 
 app.post('/test-push', async (_req, res) => {
@@ -48,18 +63,19 @@ async function start() {
   await connectDB();
   console.log('DB connected');
 
-  cron.schedule('*/15 * * * *', async () => {
+  cron.schedule('*/15 * * * *', () => {
     console.log('Scan started', new Date().toISOString());
-    try {
-      await runScan();
-      console.log('Scan done');
-    } catch (e) {
-      console.error('Scan error', e);
-    }
+    void safeScan('cron');
   });
 
   const port = process.env.PORT ?? 3000;
   app.listen(port, () => console.log(`Server running on port ${port}`));
 }
 
-start().catch(console.error);
+process.on('unhandledRejection', e => console.error('Unhandled rejection:', e));
+process.on('uncaughtException', e => console.error('Uncaught exception:', e));
+
+start().catch(e => {
+  console.error('Startup failed:', e);
+  process.exit(1);
+});

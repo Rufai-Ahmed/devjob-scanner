@@ -1,5 +1,7 @@
 import type { Post } from './reddit';
-import { batchMap } from './utils';
+import { batchMap, fetchWithTimeout } from './utils';
+
+const MAX_XML_BYTES = 1_000_000;
 
 const MAX_AGE_MINUTES = 20;
 const HEADERS = { 'User-Agent': 'DevJobScanner/1.0' };
@@ -37,9 +39,9 @@ export async function fetchCraigslist(keywords: string[]): Promise<Post[]> {
 
   const results = await batchMap(CITIES, async city => {
       try {
-        const res = await fetch(`https://${city}.craigslist.org/search/cpg?format=rss`, { headers: HEADERS });
+        const res = await fetchWithTimeout(`https://${city}.craigslist.org/search/cpg?format=rss`, { headers: HEADERS });
         if (!res.ok) return [];
-        const xml = await res.text();
+        const xml = (await res.text()).slice(0, MAX_XML_BYTES);
         return parseItems(xml)
           .filter(item => lc.some(kw => item.title.toLowerCase().includes(kw)) && isRecent(item.date))
           .map(item => ({
