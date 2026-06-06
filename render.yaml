@@ -11,5 +11,7 @@ services:
         sync: false
       - key: REDDIT_CLIENT_SECRET
         sync: false
+      - key: RECRUIT_ENABLED
+        value: "true"
       - key: NODE_ENV
         value: production

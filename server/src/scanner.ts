@@ -3,15 +3,12 @@ import { fetchJobBoards, fetchSearchLeads, fetchDiscovery, type Post } from './r
 import { fetchCraigslist } from './craigslist';
 import { fetchHN } from './hn';
 import { fetchBluesky } from './bluesky';
+import { recruitSources } from './recruit';
 import { notifyAll } from './push';
 
 const JOB_SUBREDDITS = ['forhire', 'WebDevJobs', 'Programmers_forhire', 'freelance', 'slavelabour', 'hiring'];
 const DISCOVERY_SUBREDDITS = ['entrepreneur', 'smallbusiness', 'startups', 'SideProject', 'webdev', 'digitalnomad', 'ecommerce', 'agency'];
 const SEARCH_TERMS = ['need a developer', 'need a mobile app', 'need web developer', 'looking for developer', 'looking for a developer', 'hire a developer', 'need a website', 'need website', 'looking for freelancer', 'need freelancer', 'need a freelancer'];
-
-// Recruit scan: people in Outlier-supported regions (UK etc.) looking for online/remote income.
-const RECRUIT_SUBREDDITS = ['beermoneyuk', 'beermoney', 'WorkOnline', 'sidehustle', 'remotework', 'UKJobs'];
-const RECRUIT_TERMS = ['outlier ai', 'outlier.ai', 'data annotation', 'ai training jobs', 'make money online', 'work from home uk', 'remote side income', 'looking for online work'];
 
 // Per-source counts from the last scan, surfaced via /health so it's easy
 // to see which sources actually work from this host.
@@ -23,12 +20,10 @@ export async function runScan(): Promise<void> {
     redditBoards: fetchJobBoards(JOB_SUBREDDITS),
     redditSearch: fetchSearchLeads(SEARCH_TERMS),
     redditDiscovery: fetchDiscovery(DISCOVERY_SUBREDDITS, SEARCH_TERMS),
-    redditRecruitSearch: fetchSearchLeads(RECRUIT_TERMS, { idPrefix: 'rec', recruit: true }),
-    redditRecruitDiscovery: fetchDiscovery(RECRUIT_SUBREDDITS, RECRUIT_TERMS, { idPrefix: 'recd', recruit: true }),
     craigslist: fetchCraigslist(SEARCH_TERMS),
     hn: fetchHN(SEARCH_TERMS),
     bluesky: fetchBluesky(SEARCH_TERMS),
-    blueskyRecruit: fetchBluesky(RECRUIT_TERMS, { idPrefix: 'bskyrec', recruit: true }),
+    ...recruitSources(),
   };
 
   const names = Object.keys(sources);

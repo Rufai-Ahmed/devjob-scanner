@@ -2,6 +2,7 @@ import express from 'express';
 import cron from 'node-cron';
 import { connectDB, Device } from './db';
 import { runScan, lastScan } from './scanner';
+import { recruitEnabled } from './recruit';
 
 const app = express();
 app.use(express.json({ limit: '16kb' }));
@@ -36,6 +37,7 @@ app.get('/health', (_req, res) => res.json({
   ok: true,
   time: new Date().toISOString(),
   memoryMB: Math.round(process.memoryUsage().rss / 1024 / 1024),
+  recruitEnabled: recruitEnabled(),
   lastScan,
 }));
 
