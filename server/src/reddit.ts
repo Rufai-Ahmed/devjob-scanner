@@ -45,7 +45,7 @@ export interface Post {
   created_utc: number;
   num_comments: number;
   isLead: boolean;
-  source: 'reddit' | 'craigslist';
+  source: 'reddit' | 'craigslist' | 'hn' | 'bluesky';
   recruit?: boolean;
 }
 

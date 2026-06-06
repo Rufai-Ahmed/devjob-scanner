@@ -5,15 +5,20 @@ import { fetchWithTimeout } from './utils';
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
 const CHUNK_SIZE = 100;
 
+const SOURCE_NAMES: Record<string, string> = { hn: 'Hacker News', bluesky: 'Bluesky' };
+
 function buildMessage(post: Post) {
-  const isCL = post.source === 'craigslist';
+  const isReddit = post.source === 'reddit';
+  const place = isReddit
+    ? `r/${post.subreddit}`
+    : post.source === 'craigslist'
+      ? `Craigslist (${post.subreddit})`
+      : `${SOURCE_NAMES[post.source]} (${post.subreddit})`;
   const title = post.recruit
-    ? `🎯 Recruit prospect in r/${post.subreddit}`
-    : isCL
-      ? `🔥 New lead on Craigslist (${post.subreddit})`
-      : post.isLead
-        ? `🔥 New lead in r/${post.subreddit}`
-        : `🟢 Untouched in r/${post.subreddit}`;
+    ? `🎯 Recruit prospect — ${place}`
+    : post.isLead
+      ? `🔥 New lead — ${place}`
+      : `🟢 Untouched in ${place}`;
   const appPost = {
     id: post.id,
     title: post.title,
@@ -24,8 +29,9 @@ function buildMessage(post: Post) {
     num_comments: post.num_comments,
     score: 0,
     permalink: post.permalink,
-    url: isCL ? post.permalink : `https://www.reddit.com${post.permalink}`,
-    sourceType: isCL ? 'craigslist' : post.isLead ? 'reddit-search' : 'reddit',
+    url: isReddit ? `https://www.reddit.com${post.permalink}` : post.permalink,
+    sourceType: isReddit ? (post.isLead ? 'reddit-search' : 'reddit') : post.source,
+    sourceName: SOURCE_NAMES[post.source],
   };
   return { title, body: post.title, data: { post: JSON.stringify(appPost) } };
 }

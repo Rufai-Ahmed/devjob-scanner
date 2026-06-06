@@ -1,7 +1,7 @@
 import express from 'express';
 import cron from 'node-cron';
 import { connectDB, Device } from './db';
-import { runScan } from './scanner';
+import { runScan, lastScan } from './scanner';
 
 const app = express();
 app.use(express.json({ limit: '16kb' }));
@@ -32,7 +32,12 @@ app.post('/register', async (req, res) => {
   res.json({ ok: true });
 });
 
-app.get('/health', (_req, res) => res.json({ ok: true, time: new Date().toISOString() }));
+app.get('/health', (_req, res) => res.json({
+  ok: true,
+  time: new Date().toISOString(),
+  memoryMB: Math.round(process.memoryUsage().rss / 1024 / 1024),
+  lastScan,
+}));
 
 app.get('/devices', async (_req, res) => {
   const devices = await Device.find({}, 'token updatedAt').lean();
