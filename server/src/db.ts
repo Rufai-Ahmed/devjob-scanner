@@ -17,3 +17,17 @@ const seenPostSchema = new Schema({
 });
 
 export const SeenPost = model('SeenPost', seenPostSchema);
+
+// Recruit prospects kept for 7 days so the app can browse them in its own tab.
+const recruitPostSchema = new Schema({
+  postId: { type: String, unique: true, required: true },
+  title: String,
+  subreddit: String,
+  permalink: String,
+  url: String,
+  source: String,
+  created_utc: Number,
+  createdAt: { type: Date, default: Date.now, expires: 604800 },
+});
+
+export const RecruitPost = model('RecruitPost', recruitPostSchema);

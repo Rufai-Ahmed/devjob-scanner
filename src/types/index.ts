@@ -1,4 +1,4 @@
-export type SourceType = 'reddit' | 'hn' | 'remoteok' | 'weworkremotely' | 'reddit-search' | 'reddit-discovery' | 'craigslist';
+export type SourceType = 'reddit' | 'hn' | 'remoteok' | 'weworkremotely' | 'reddit-search' | 'reddit-discovery' | 'craigslist' | 'bluesky';
 export type LeadStatus = 'interested' | 'replied' | 'closed';
 export type AIProvider = 'anthropic' | 'groq' | 'gemini';
 
@@ -17,6 +17,7 @@ export interface RedditPost {
   sourceType?: SourceType;
   sourceName?: string;
   leadScore?: number;
+  recruit?: boolean;
 }
 
 export interface AppSettings {

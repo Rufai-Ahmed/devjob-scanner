@@ -1,4 +1,4 @@
-import { SeenPost } from './db';
+import { SeenPost, RecruitPost } from './db';
 import { fetchJobBoards, fetchSearchLeads, fetchDiscovery, type Post } from './reddit';
 import { fetchCraigslist } from './craigslist';
 import { fetchHN } from './hn';
@@ -34,6 +34,19 @@ export async function runScan(): Promise<void> {
 
   const all = settled.flat();
   const unseen = await filterUnseen(all);
+
+  const recruits = unseen.filter(p => p.recruit);
+  if (recruits.length) {
+    await RecruitPost.insertMany(recruits.map(p => ({
+      postId: p.id,
+      title: p.title,
+      subreddit: p.subreddit,
+      permalink: p.permalink,
+      url: p.source === 'reddit' ? `https://www.reddit.com${p.permalink}` : p.permalink,
+      source: p.source,
+      created_utc: p.created_utc,
+    })), { ordered: false }).catch(() => {});
+  }
 
   lastScan = { at: new Date().toISOString(), durationMs: Date.now() - started, counts };
   console.log('Scan counts:', JSON.stringify(counts), `— ${unseen.length} new`);

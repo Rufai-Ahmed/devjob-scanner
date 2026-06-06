@@ -32,6 +32,7 @@ function buildMessage(post: Post) {
     url: isReddit ? `https://www.reddit.com${post.permalink}` : post.permalink,
     sourceType: isReddit ? (post.isLead ? 'reddit-search' : 'reddit') : post.source,
     sourceName: SOURCE_NAMES[post.source],
+    recruit: post.recruit || undefined,
   };
   return { title, body: post.title, data: { post: JSON.stringify(appPost) } };
 }

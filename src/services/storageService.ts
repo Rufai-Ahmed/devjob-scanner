@@ -7,6 +7,7 @@ const KEYS = {
   LAST_SCAN: 'last_scan_time',
   CACHED_POSTS: 'cached_posts',
   LEAD_STATUSES: 'lead_statuses',
+  RECRUIT_POSTS: 'recruit_posts',
 };
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -85,6 +86,20 @@ export async function getCachedPosts(): Promise<RedditPost[]> {
 
 export async function saveCachedPosts(posts: RedditPost[]): Promise<void> {
   await AsyncStorage.setItem(KEYS.CACHED_POSTS, JSON.stringify(posts.slice(0, 150)));
+}
+
+export async function getCachedRecruits(): Promise<RedditPost[]> {
+  try {
+    const raw = await AsyncStorage.getItem(KEYS.RECRUIT_POSTS);
+    if (!raw) return [];
+    return JSON.parse(raw) as RedditPost[];
+  } catch {
+    return [];
+  }
+}
+
+export async function saveCachedRecruits(posts: RedditPost[]): Promise<void> {
+  await AsyncStorage.setItem(KEYS.RECRUIT_POSTS, JSON.stringify(posts.slice(0, 100)));
 }
 
 export async function getLeadStatuses(): Promise<Record<string, LeadStatus>> {

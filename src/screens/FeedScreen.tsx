@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   RefreshControl,
+  ScrollView,
   StatusBar,
   Platform,
   ActivityIndicator,
@@ -26,15 +27,19 @@ import {
   getSeenPostIds,
   addSeenPostIds,
   getLeadStatuses,
+  getCachedRecruits,
+  saveCachedRecruits,
 } from '../services/storageService';
 import { sendJobNotification } from '../services/notificationService';
+import { fetchRecruits } from '../services/recruitService';
 
 type NavProp = NativeStackNavigationProp<FeedStackParamList, 'FeedList'>;
-type Filter = 'all' | 'leads' | 'interested' | 'replied';
+type Filter = 'all' | 'leads' | 'recruits' | 'interested' | 'replied';
 
 const FILTERS: { key: Filter; label: string }[] = [
   { key: 'all', label: 'All' },
   { key: 'leads', label: 'Leads' },
+  { key: 'recruits', label: '🎯 Recruits' },
   { key: 'interested', label: 'Interested' },
   { key: 'replied', label: 'Replied' },
 ];
@@ -51,6 +56,7 @@ function formatLastScan(date: Date | null): string {
 export default function FeedScreen() {
   const navigation = useNavigation<NavProp>();
   const [posts, setPosts] = useState<RedditPost[]>([]);
+  const [recruits, setRecruits] = useState<RedditPost[]>([]);
   const [statuses, setStatuses] = useState<Record<string, LeadStatus>>({});
   const [filter, setFilter] = useState<Filter>('all');
   const [refreshing, setRefreshing] = useState(false);
@@ -67,12 +73,14 @@ export default function FeedScreen() {
   }, []));
 
   async function loadInitial() {
-    const [cached, scanTime, savedStatuses] = await Promise.all([
+    const [cached, cachedRecruits, scanTime, savedStatuses] = await Promise.all([
       getCachedPosts(),
+      getCachedRecruits(),
       getLastScanTime(),
       getLeadStatuses(),
     ]);
     if (cached.length > 0) setPosts(cached);
+    if (cachedRecruits.length > 0) setRecruits(cachedRecruits);
     setLastScan(scanTime);
     setStatuses(savedStatuses);
     setLoading(false);
@@ -83,7 +91,14 @@ export default function FeedScreen() {
     setRefreshing(true);
     try {
       const settings = await getSettings();
-      const fetched = await fetchAllJobs(settings);
+      const [fetched, fetchedRecruits] = await Promise.all([
+        fetchAllJobs(settings),
+        fetchRecruits(),
+      ]);
+      if (fetchedRecruits !== null) {
+        setRecruits(fetchedRecruits);
+        await saveCachedRecruits(fetchedRecruits);
+      }
       const seenIds = await getSeenPostIds();
 
       const newUntouched = fetched.filter(p => !seenIds.has(p.id) && isNewAndUntouched(p));
@@ -116,7 +131,8 @@ export default function FeedScreen() {
     !isLead(p) || (p.leadScore ?? 0) >= 12
   );
 
-  const filteredPosts = visiblePosts.filter(p => {
+  // Recruits live in their own list, fully separate from the job feed
+  const filteredPosts = filter === 'recruits' ? recruits : visiblePosts.filter(p => {
     if (filter === 'leads') return isLead(p);
     if (filter === 'interested') return statuses[p.id] === 'interested';
     if (filter === 'replied') return statuses[p.id] === 'replied';
@@ -143,10 +159,11 @@ export default function FeedScreen() {
       </View>
 
       {/* Filter tabs */}
-      <View style={styles.filterRow}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll} contentContainerStyle={styles.filterRow}>
         {FILTERS.map(f => {
           const count = f.key === 'all' ? visiblePosts.length
             : f.key === 'leads' ? visiblePosts.filter(isLead).length
+            : f.key === 'recruits' ? recruits.length
             : visiblePosts.filter(p => statuses[p.id] === f.key).length;
           const active = filter === f.key;
           return (
@@ -162,7 +179,7 @@ export default function FeedScreen() {
             </TouchableOpacity>
           );
         })}
-      </View>
+      </ScrollView>
 
       {loading ? (
         <View style={styles.centered}>
@@ -192,10 +209,14 @@ export default function FeedScreen() {
             <View style={styles.emptyState}>
               <Text style={styles.emptyIcon}>📡</Text>
               <Text style={styles.emptyText}>
-                {filter === 'all' ? 'No posts yet' : `No ${filter} posts`}
+                {filter === 'all' ? 'No posts yet'
+                  : filter === 'recruits' ? 'No recruit prospects yet'
+                  : `No ${filter} posts`}
               </Text>
               <Text style={styles.emptySubtext}>
-                {filter === 'all' ? 'Tap Scan or pull down to fetch jobs' : 'Pull down to refresh the feed'}
+                {filter === 'all' ? 'Tap Scan or pull down to fetch jobs'
+                  : filter === 'recruits' ? 'Prospects found by the server appear here for 7 days'
+                  : 'Pull down to refresh the feed'}
               </Text>
             </View>
           }
@@ -242,13 +263,16 @@ const styles = StyleSheet.create({
     fontFamily: 'SpaceMono_700Bold',
     fontSize: 12,
   },
+  filterScroll: {
+    flexGrow: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
   filterRow: {
     flexDirection: 'row',
     paddingHorizontal: 14,
     paddingVertical: 10,
     gap: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
   },
   filterTab: {
     paddingHorizontal: 12,

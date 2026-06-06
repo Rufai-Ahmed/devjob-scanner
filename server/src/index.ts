@@ -1,6 +1,6 @@
 import express from 'express';
 import cron from 'node-cron';
-import { connectDB, Device } from './db';
+import { connectDB, Device, RecruitPost } from './db';
 import { runScan, lastScan } from './scanner';
 import { recruitEnabled } from './recruit';
 
@@ -40,6 +40,28 @@ app.get('/health', (_req, res) => res.json({
   recruitEnabled: recruitEnabled(),
   lastScan,
 }));
+
+app.get('/recruits', async (_req, res) => {
+  const items = await RecruitPost.find({}).sort({ created_utc: -1 }).limit(100).lean();
+  res.json({
+    count: items.length,
+    posts: items.map(r => ({
+      id: r.postId,
+      title: r.title,
+      selftext: '',
+      subreddit: r.subreddit,
+      author: '',
+      created_utc: r.created_utc,
+      num_comments: 0,
+      score: 0,
+      permalink: r.permalink,
+      url: r.url,
+      sourceType: r.source === 'reddit' ? 'reddit-search' : r.source,
+      sourceName: r.source === 'hn' ? 'Hacker News' : r.source === 'bluesky' ? 'Bluesky' : undefined,
+      recruit: true,
+    })),
+  });
+});
 
 app.get('/devices', async (_req, res) => {
   const devices = await Device.find({}, 'token updatedAt').lean();

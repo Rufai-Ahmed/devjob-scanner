@@ -23,8 +23,11 @@ const SOURCE_COLOR: Record<string, string> = {
   'reddit-search': '#ff4500',
   'reddit-discovery': '#7c3aed',
   craigslist: '#6b21a8',
+  bluesky: '#0085ff',
   reddit: Colors.purple,
 };
+
+const RECRUIT_COLOR = '#f59e0b';
 
 const STATUS_CONFIG: Record<LeadStatus, { label: string; color: string }> = {
   interested: { label: 'INTERESTED', color: Colors.low },
@@ -51,6 +54,11 @@ export default function PostCard({ post, status, onPress }: Props) {
           <Text style={[styles.pillText, { color: sourceColor }]} numberOfLines={1}>{sourceLabel}</Text>
         </View>
         <View style={styles.rightPills}>
+          {post.recruit && (
+            <View style={[styles.pill, { backgroundColor: RECRUIT_COLOR + '22' }]}>
+              <Text style={[styles.pillText, { color: RECRUIT_COLOR }]}>🎯 RECRUIT</Text>
+            </View>
+          )}
           {status && (
             <View style={[styles.pill, { backgroundColor: STATUS_CONFIG[status].color + '22' }]}>
               <Text style={[styles.pillText, { color: STATUS_CONFIG[status].color }]}>
